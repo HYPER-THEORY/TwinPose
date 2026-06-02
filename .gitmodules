@@ -1,0 +1,13 @@
+[submodule "libraries/opencv"]
+	path = libraries/opencv
+	url = https://github.com/opencv/opencv.git
+[submodule "libraries/json"]
+	path = libraries/json
+	url = https://github.com/nlohmann/json.git
+[submodule "libraries/sdl"]
+	path = libraries/sdl
+	url = https://github.com/libsdl-org/SDL.git
+	branch = SDL2
+[submodule "libraries/imgui"]
+	path = libraries/imgui
+	url = https://github.com/ocornut/imgui.git

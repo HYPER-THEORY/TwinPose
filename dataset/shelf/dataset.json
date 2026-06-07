@@ -1,0 +1,20 @@
+{
+	"camera_loader" : "4DA",
+	"camera_load_path" : "calibration.json",
+
+	"detection_loader" : "MMPose",
+	"detection_skel_type" : "Coco17",
+	"detection_load_path" : "mmpose-hrnet",
+	"detection_joint_type_num": 17,
+	"detection_view_num": 5,
+	"detection_max_person_num" : 4,
+	"detection_frame_range" : [300, 600],
+
+	"ground_truth_loader" : "Campus",
+	"ground_truth_skel_type" : "Shelf14",
+	"ground_truth_load_path" : "shelf_300_600.gt.txt",
+	"ground_truth_joint_type_num" : 14,
+	"ground_truth_max_person_num" : 4,
+
+	"result_correction": "Shelf"
+}

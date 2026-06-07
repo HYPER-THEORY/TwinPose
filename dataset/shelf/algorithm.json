@@ -1,0 +1,16 @@
+{
+	"joint_types" : [0, 4, 3, 2, 7, 6, 5, 1, 11, 10, 9, 14, 13, 12, 8],
+	"max_person_num": 0,
+
+	"use_bone_length_score" : true,
+	"use_edge_num_in_association" : false,
+
+	"conf_discard_threshold" : 0.0,
+	"conf_exponent" : 1.0,
+
+	"max_joint_radius" : 0.05,
+	"max_joint_cluster_radius" : 0.10,
+
+	"association_score_threshold" : 5.0,
+	"pose_discard_threshold" : 10.0
+}

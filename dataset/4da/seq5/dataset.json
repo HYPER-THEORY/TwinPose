@@ -1,0 +1,23 @@
+{
+	"camera_loader" : "4DA",
+	"camera_load_path" : "calibration.json",
+
+	"detection_loader" : "MMPose",
+	"detection_skel_type" : "Coco17",
+	"detection_load_path" : "mmpose-hrnet",
+	"detection_joint_type_num": 17,
+	"detection_view_num": 6,
+	"detection_max_person_num" : 4,
+	"detection_frame_range" : [1, 3882],
+	"detection_joint_2d_scale": 0.1796875,
+
+	"ground_truth_loader" : "4DA",
+	"ground_truth_skel_type" : "OptiTrack21",
+	"ground_truth_load_path" : "gt.txt",
+	"ground_truth_joint_type_num" : 21,
+	"ground_truth_max_person_num" : 4,
+
+	"sync_points_path" : "sync_points.txt",
+
+	"result_correction": "4DA"
+}

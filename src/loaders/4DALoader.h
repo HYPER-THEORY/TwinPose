@@ -143,9 +143,9 @@ public:
 					int num_a = current_view.get_joint_num(type_a);
 					int num_b = current_view.get_joint_num(type_b);
 
-					for (int index_a = 0; index_a < num_a; ++index_a)
+					for (int index_a = 1; index_a <= num_a; ++index_a)
 					{
-						for (int index_b = 0; index_b < num_b; ++index_b)
+						for (int index_b = 1; index_b <= num_b; ++index_b)
 						{
 							const Joint2D& joint_a = current_view.get_joint(type_a, index_a);
 							const Joint2D& joint_b = current_view.get_joint(type_b, index_b);

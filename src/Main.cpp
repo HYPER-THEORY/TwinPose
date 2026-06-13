@@ -648,7 +648,7 @@ static void evaluate_results(int frame_index)
 	const MultiPose3D& ground_truth = state.ground_truth_multi_poses[frame_index];
 	FrameResult& result = state.frame_results[frame_index];
 
-	for (int person_id = 0; person_id < info.max_person_num; ++person_id)
+	for (auto& person_id : state.eval_persons)
 	{
 		if (!ground_truth.has_pose(person_id))
 		{
@@ -755,11 +755,11 @@ static void visualize_frame(Room& room)
 
 	if (state.show_ground_truth)
 	{
-		viz_multi_pose_3d(room, ground_truth, info.max_person_num, remap_position);
+		viz_multi_pose_3d(room, ground_truth, remap_position);
 	}
 	if (state.show_result)
 	{
-		viz_multi_pose_3d(room, result.multi_pose, info.max_person_num, remap_position, ink::Vec3(1.5));
+		viz_multi_pose_3d(room, result.multi_pose, remap_position, ink::Vec3(1.5));
 	}
 
 	const FrameResult& frame_result = state.frame_result[state.frame_index];

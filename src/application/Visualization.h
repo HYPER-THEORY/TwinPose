@@ -76,13 +76,12 @@ inline void viz_pose_3d(Room& room, const Pose3D& pose, const RemapPosition& rem
 	}
 }
 
-inline void viz_multi_pose_3d(Room& room, const MultiPose3D& multi_pose, int person_num,
-	const RemapPosition& remap, const ink::Vec3& color = Room::DEFAULT_COLOR)
+inline void viz_multi_pose_3d(Room& room, const MultiPose3D& multi_pose, const RemapPosition& remap,
+	const ink::Vec3& color = Room::DEFAULT_COLOR)
 {
-	for (int person_index = 0; person_index < person_num; ++person_index)
+	for (auto& [pose_id, pose] : multi_pose)
 	{
-		if (!multi_pose.has_pose(person_index)) continue;
-		viz_pose_3d(room, multi_pose.get_pose(person_index), remap, color);
+		viz_pose_3d(room, pose, remap, color);
 	}
 }
 

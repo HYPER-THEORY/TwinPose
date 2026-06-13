@@ -128,23 +128,25 @@ enum ResultCorrection : int
 	RESULT_CORRECTION_4DA,
 };
 
-struct FrameScore
-{
-	std::vector<float> pcp_score;
-	std::vector<float> pcp_completeness;
-	std::vector<float> pck_score;
-	std::vector<float> pck_completeness;
-	std::vector<float> mpjpe_score;
-	std::vector<float> mpjpe_completeness;
-	float execution_time = 0.0f;
-};
-
 struct FrameResult
 {
 	std::vector<std::vector<PoseBuilder::Joint>> joint_list_per_type;
 	std::vector<std::vector<PoseBuilder::JointCluster>> cluster_list_per_type;
-	std::vector<EdgeSet> global_pose_graph;
 	std::vector<std::vector<EdgeSet>> pose_graph_per_person;
+	MultiPose3D multi_pose;
+
+	std::unordered_map<int, std::vector<bool>> pcp_results;
+	std::unordered_map<int, std::vector<bool>> pck_results;
+	std::unordered_map<int, std::vector<float>> mpjpe_results;
+
+	std::unordered_map<int, float> pcp_score;
+	std::unordered_map<int, float> pcp_completeness;
+	std::unordered_map<int, float> pck_score;
+	std::unordered_map<int, float> pck_completeness;
+	std::unordered_map<int, float> mpjpe_score;
+	std::unordered_map<int, float> mpjpe_completeness;
+
+	float execution_time = 0.0f;
 };
 
 struct
@@ -206,21 +208,22 @@ struct
 	float pck_distance = 0.2f;
 
 	std::vector<MultiView> multi_views;
-	std::vector<MultiPose3D> multi_pose_ground_truth;
-	std::vector<MultiPose3D> result_per_frame;
+	std::vector<MultiPose3D> ground_truth_multi_poses;
 
-	std::unordered_map<int, FrameResult> frame_result;
-	std::unordered_map<int, FrameScore> frame_scores;
+	std::unordered_map<int, FrameResult> frame_results;
 
 	std::deque<std::vector<std::vector<float>>> bone_length_history;
 
-	double total_pcp_score = 0;
-	double total_pcp_completeness = 0;
-	double total_pck_score = 0;
-	double total_pck_completeness = 0;
-	double total_mpjpe_score = 0;
-	double total_mpjpe_completeness = 0;
-	double total_execution_time = 0;
+	std::unordered_map<int, float> total_pcp_score;
+	std::unordered_map<int, float> total_pcp_completeness;
+	std::unordered_map<int, float> total_pck_score;
+	std::unordered_map<int, float> total_pck_completeness;
+	std::unordered_map<int, float> total_mpjpe_score;
+	std::unordered_map<int, float> total_mpjpe_completeness;
+
+	std::vector<int> eval_persons;
+
+	float total_execution_time = 0;
 	int computed_count = 0;
 } state;
 
@@ -362,24 +365,24 @@ static bool load_dataset()
 		if (info.ground_truth_loader == GROUND_TRUTH_LOADER_4DA)
 		{
 			_4DALoader loader;
-			loaded = loader.load_multi_poses(info.ground_truth_load_path, state.multi_pose_ground_truth);
+			loaded = loader.load_multi_poses(info.ground_truth_load_path, state.ground_truth_multi_poses);
 		}
 		else if (info.ground_truth_loader == GROUND_TRUTH_LOADER_4DA_SHELF)
 		{
 			_4DALoader loader;
-			loaded = loader.load_multi_poses_2(info.ground_truth_load_path, state.multi_pose_ground_truth);
+			loaded = loader.load_multi_poses_2(info.ground_truth_load_path, state.ground_truth_multi_poses);
 		}
 		else if (info.ground_truth_loader == GROUND_TRUTH_LOADER_CAMPUS)
 		{
 			CampusLoader loader;
 			loader.joint_type_num = info.ground_truth_joint_type_num;
-			loaded = loader.load_multi_poses(info.ground_truth_load_path, state.multi_pose_ground_truth);
+			loaded = loader.load_multi_poses(info.ground_truth_load_path, state.ground_truth_multi_poses);
 		}
 		else if (info.ground_truth_loader == GROUND_TRUTH_LOADER_PANOPTIC)
 		{
 			PanopticLoader loader;
 			loader.frame_range = {info.detection_frame_begin, info.detection_frame_end};
-			loaded = loader.load_multi_poses(info.ground_truth_load_path, state.multi_pose_ground_truth);
+			loaded = loader.load_multi_poses(info.ground_truth_load_path, state.ground_truth_multi_poses);
 		}
 
 		if (!loaded)
@@ -390,23 +393,23 @@ static bool load_dataset()
 
 		if (info.ground_truth_skel_type == SKELETON_TYPE_OPTITRACK_21)
 		{
-			state.multi_pose_ground_truth = dataset::convert_optitrack21_to_body25(state.multi_pose_ground_truth);
+			state.ground_truth_multi_poses = dataset::convert_optitrack21_to_body25(state.ground_truth_multi_poses);
 		}
 		else if (info.ground_truth_skel_type == SKELETON_TYPE_SKEL_19)
 		{
-			state.multi_pose_ground_truth = dataset::convert_skel19_to_body25(state.multi_pose_ground_truth);
+			state.ground_truth_multi_poses = dataset::convert_skel19_to_body25(state.ground_truth_multi_poses);
 		}
 		else if (info.ground_truth_skel_type == SKELETON_TYPE_SHELF_14)
 		{
-			state.multi_pose_ground_truth = dataset::convert_shelf14_to_body25(state.multi_pose_ground_truth);
+			state.ground_truth_multi_poses = dataset::convert_shelf14_to_body25(state.ground_truth_multi_poses);
 		}
 		else if (info.ground_truth_skel_type == SKELETON_TYPE_COCO_17)
 		{
-			state.multi_pose_ground_truth = dataset::convert_coco17_to_body25(state.multi_pose_ground_truth);
+			state.ground_truth_multi_poses = dataset::convert_coco17_to_body25(state.ground_truth_multi_poses);
 		}
 		else if (info.ground_truth_skel_type == SKELETON_TYPE_COCO_19)
 		{
-			state.multi_pose_ground_truth = dataset::convert_coco19_to_body25(state.multi_pose_ground_truth);
+			state.ground_truth_multi_poses = dataset::convert_coco19_to_body25(state.ground_truth_multi_poses);
 		}
 
 		if (info.sync_points_path[0] != '\0')
@@ -418,7 +421,7 @@ static bool load_dataset()
 				std::cerr << "Failed to load sync points from " << info.sync_points_path << "\n";
 				return false;
 			}
-			state.multi_pose_ground_truth = dataset::synchronize(state.multi_pose_ground_truth, sync_points_0, sync_points_1);
+			state.ground_truth_multi_poses = dataset::synchronize(state.ground_truth_multi_poses, sync_points_0, sync_points_1);
 		}
 
 		if (info.result_correction == RESULT_CORRECTION_4DA)
@@ -438,19 +441,17 @@ static bool load_dataset()
 	}
 
 	int frame_num = state.multi_views.size();
-	state.multi_pose_ground_truth.resize(frame_num);
-	state.result_per_frame.assign(frame_num, MultiPose3D());
+	state.ground_truth_multi_poses.resize(frame_num);
 
-	state.frame_result.clear();
-	state.frame_scores.clear();
+	state.frame_results.clear();
 	state.bone_length_history.clear();
 
-	state.total_pcp_score = 0;
-	state.total_pcp_completeness = 0;
-	state.total_pck_score = 0;
-	state.total_pck_completeness = 0;
-	state.total_mpjpe_score = 0;
-	state.total_mpjpe_completeness = 0;
+	state.total_pcp_score.clear();
+	state.total_pcp_completeness.clear();
+	state.total_pck_score.clear();
+	state.total_pck_completeness.clear();
+	state.total_mpjpe_score.clear();
+	state.total_mpjpe_completeness.clear();
 	state.total_execution_time = 0;
 	state.computed_count = 0;
 
@@ -463,6 +464,16 @@ static bool load_dataset()
 	{
 		info.max_person_num = info.detection_max_person_num;
 	}
+
+	for (auto& multi_pose : state.ground_truth_multi_poses)
+	{
+		for (auto& [person_id, pose] : multi_pose)
+		{
+			state.eval_persons.emplace_back(person_id);
+		}
+	}
+	std::sort(state.eval_persons.begin(), state.eval_persons.end());
+	state.eval_persons.erase(std::unique(state.eval_persons.begin(), state.eval_persons.end()), state.eval_persons.end());
 
 	return true;
 }
@@ -539,7 +550,7 @@ static void execute_algorithm(int frame_index)
 		const MultiPose3D* history_multi_pose = nullptr;
 		if (frame_index > 0)
 		{
-			history_multi_pose = &state.result_per_frame[frame_index - 1];
+			history_multi_pose = &state.frame_results[frame_index - 1].multi_pose;
 		}
 		t_params.history_multi_pose = history_multi_pose;
 	}
@@ -551,38 +562,43 @@ static void execute_algorithm(int frame_index)
 	auto end_time = std::chrono::steady_clock::now();
 	float execution_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() * 0.001f;
 
-	state.result_per_frame[frame_index] = std::move(builder.result);
-
-	FrameResult result;
+	FrameResult& result = state.frame_results[frame_index];
 	result.joint_list_per_type = std::move(builder.joint_list_per_type);
 	result.cluster_list_per_type = std::move(builder.cluster_list_per_type);
 	result.pose_graph_per_person = std::move(builder.pose_graph_per_person);
-	state.frame_result[frame_index] = std::move(result);
+	result.multi_pose = std::move(builder.result);
+	result.execution_time = execution_time;
 
-	state.frame_scores[frame_index].execution_time = execution_time;
-
-	record_bone_lengths(state.result_per_frame[frame_index], ordered_bone_types);
+	record_bone_lengths(result.multi_pose, ordered_bone_types);
 
 	if (info.result_correction == RESULT_CORRECTION_SHELF)
 	{
-		dataset::correct_shelf(state.result_per_frame[frame_index]);
+		dataset::correct_shelf(result.multi_pose);
 	}
 	else if (info.result_correction == RESULT_CORRECTION_4DA)
 	{
-		dataset::correct_4da(state.result_per_frame[frame_index]);
+		dataset::correct_4da(result.multi_pose);
 	}
 }
 
-static void print_scores(const std::vector<float>& values, const std::vector<float>& completeness, const char* method,
-	int frame_index)
+static float compute_avg(const std::unordered_map<int, float>& scores, const std::unordered_map<int, float>& completeness)
 {
-	float total = 0, total_completeness = 0;
-	for (int index = 0; index < values.size(); ++index)
+	float total = 0.0f;
+	float count = 0.0f;
+	for (auto& [person_id, score] : scores)
 	{
-		total += values[index];
-		total_completeness += completeness[index];
+		if (completeness.at(person_id) > 0.0f)
+		{
+			total += score / completeness.at(person_id);
+			count += 1.0f;
+		}
 	}
+	return count == 0.0f ? 0.0f : total / count;
+}
 
+static void print_scores(const std::unordered_map<int, float>& scores, const std::unordered_map<int, float>& completeness,
+	const char* method, int frame_index = -1)
+{
 	if (frame_index < 0)
 	{
 		std::cout << "Total:     ";
@@ -593,27 +609,29 @@ static void print_scores(const std::vector<float>& values, const std::vector<flo
 	}
 	std::cout << " | " << method;
 
-	for (int index = 0; index < values.size(); ++index)
+	bool is_nan = true;
+	for (auto& person_id : state.eval_persons)
 	{
-		std::cout << " | A" << index + 1 << ": ";
-		if (completeness[index] <= 0.0f)
+		std::cout << " | A" << person_id + 1 << ": ";
+		if (!completeness.contains(person_id) || completeness.at(person_id) == 0.0f)
 		{
 			std::cout << "N/A   ";
 		}
 		else
 		{
-			std::cout << std::fixed << std::setprecision(4) << values[index] / completeness[index];
+			is_nan = false;
+			std::cout << std::fixed << std::setprecision(4) << scores.at(person_id) / completeness.at(person_id);
 		}
 	}
 
 	std::cout << " | Avg: ";
-	if (total_completeness <= 0.0f)
+	if (is_nan)
 	{
 		std::cout << "N/A   \n";
 	}
 	else
 	{
-		std::cout << std::fixed << std::setprecision(4) << total / total_completeness << "\n";
+		std::cout << std::fixed << std::setprecision(4) << compute_avg(scores, completeness) << "\n";
 	}
 }
 
@@ -623,20 +641,8 @@ static void evaluate_results(int frame_index)
 	evaluation.pcp_alpha = state.pcp_alpha;
 	evaluation.pck_distance = state.pck_distance;
 
-	const MultiPose3D& ground_truth = state.multi_pose_ground_truth[frame_index];
-	const MultiPose3D& result = state.result_per_frame[frame_index];
-
-	FrameScore& score = state.frame_scores[frame_index];
-	score.pcp_score.assign(info.max_person_num, 0.0f);
-	score.pcp_completeness.assign(info.max_person_num, 0.0f);
-	score.pck_score.assign(info.max_person_num, 0.0f);
-	score.pck_completeness.assign(info.max_person_num, 0.0f);
-	score.mpjpe_score.assign(info.max_person_num, 0.0f);
-	score.mpjpe_completeness.assign(info.max_person_num, 0.0f);
-
-	std::vector<bool> bone_results;
-	std::vector<bool> joint_results;
-	std::vector<float> distance_results;
+	const MultiPose3D& ground_truth = state.ground_truth_multi_poses[frame_index];
+	FrameResult& result = state.frame_results[frame_index];
 
 	for (int person_id = 0; person_id < info.max_person_num; ++person_id)
 	{
@@ -646,25 +652,26 @@ static void evaluate_results(int frame_index)
 		}
 		const Pose3D& ground_truth_pose = ground_truth.get_pose(person_id);
 
-		score.pcp_score[person_id] = evaluation.pcp(
-			ground_truth_pose, result, bone_results, score.pcp_completeness[person_id]);
-		score.pck_score[person_id] = evaluation.pck(
-			ground_truth_pose, result, joint_results, score.pck_completeness[person_id]);
-		score.mpjpe_score[person_id] = evaluation.mpjpe(
-			ground_truth_pose, result, distance_results, score.mpjpe_completeness[person_id]);
+		result.pcp_score[person_id] = evaluation.pcp(
+			ground_truth_pose, result.multi_pose, result.pcp_results[person_id], result.pcp_completeness[person_id]);
+		result.pck_score[person_id] = evaluation.pck(
+			ground_truth_pose, result.multi_pose, result.pck_results[person_id], result.pck_completeness[person_id]);
+		result.mpjpe_score[person_id] = evaluation.mpjpe(
+			ground_truth_pose, result.multi_pose, result.mpjpe_results[person_id], result.mpjpe_completeness[person_id]);
 
-		state.total_pcp_score += score.pcp_score[person_id];
-		state.total_pcp_completeness += score.pcp_completeness[person_id];
-		state.total_pck_score += score.pck_score[person_id];
-		state.total_pck_completeness += score.pck_completeness[person_id];
-		state.total_mpjpe_score += score.mpjpe_score[person_id];
-		state.total_mpjpe_completeness += score.mpjpe_completeness[person_id];
+		state.total_pcp_score[person_id] += result.pcp_score[person_id];
+		state.total_pcp_completeness[person_id] += result.pcp_completeness[person_id];
+		state.total_pck_score[person_id] += result.pck_score[person_id];
+		state.total_pck_completeness[person_id] += result.pck_completeness[person_id];
+		state.total_mpjpe_score[person_id] += result.mpjpe_score[person_id];
+		state.total_mpjpe_completeness[person_id] += result.mpjpe_completeness[person_id];
 	}
 
-	state.total_execution_time += score.execution_time;
+	state.total_execution_time += result.execution_time;
 	++state.computed_count;
 
-	print_scores(score.pcp_score, score.pcp_completeness, "PCP", frame_index);
+	print_scores(result.pcp_score, result.pcp_completeness, "PCP", frame_index);
+	print_scores(state.total_pcp_score, state.total_pcp_completeness, "PCP");
 }
 
 static void goto_next_frame()
@@ -739,8 +746,8 @@ static void visualize_frame(Room& room)
 {
 	room.clean_up_joints_and_bones();
 
-	const MultiPose3D& ground_truth = state.multi_pose_ground_truth[state.frame_index];
-	const MultiPose3D& result = state.result_per_frame[state.frame_index];
+	const MultiPose3D& ground_truth = state.ground_truth_multi_poses[state.frame_index];
+	const FrameResult& result = state.frame_results[state.frame_index];
 
 	if (state.show_ground_truth)
 	{
@@ -748,7 +755,7 @@ static void visualize_frame(Room& room)
 	}
 	if (state.show_result)
 	{
-		viz_multi_pose_3d(room, result, info.max_person_num, remap_position, ink::Vec3(1.5));
+		viz_multi_pose_3d(room, result.multi_pose, info.max_person_num, remap_position, ink::Vec3(1.5));
 	}
 
 	const FrameResult& frame_result = state.frame_result[state.frame_index];
@@ -760,33 +767,33 @@ static void visualize_frame(Room& room)
 	switch (state.debug_mode)
 	{
 	case 1:
-		viz_joints(room, frame_result.joint_list_per_type,
+		viz_joints(room, result.joint_list_per_type,
 			info.joint_types, state.debug_joint_type, joint_radius, remap_position);
 		break;
 	case 2:
-		if (state.debug_joint_type < frame_result.joint_list_per_type.size())
+		if (state.debug_joint_type < result.joint_list_per_type.size())
 		{
-			viz_joints(room, frame_result.joint_list_per_type[state.debug_joint_type],
+			viz_joints(room, result.joint_list_per_type[state.debug_joint_type],
 				joint_radius, remap_position);
 		}
 		break;
 	case 3:
-		viz_clusters(room, frame_result.cluster_list_per_type,
+		viz_clusters(room, result.cluster_list_per_type,
 			info.joint_types, state.debug_joint_type, cluster_radius, remap_position);
 		break;
 	case 4:
-		viz_clusters(room, frame_result.cluster_list_per_type,
+		viz_clusters(room, result.cluster_list_per_type,
 			{state.debug_joint_type}, state.debug_joint_type, cluster_radius, remap_position);
 		break;
 	case 5:
-		viz_pose_graphs(room, frame_result.cluster_list_per_type,
-			frame_result.pose_graph_per_person, ordered_bone_types, remap_position);
+		viz_pose_graphs(room, result.cluster_list_per_type,
+			result.pose_graph_per_person, ordered_bone_types, remap_position);
 		break;
 	case 6:
-		if (state.debug_person_id < frame_result.pose_graph_per_person.size())
+		if (state.debug_person_id < result.pose_graph_per_person.size())
 		{
-			viz_pose_graph(room, frame_result.cluster_list_per_type,
-				frame_result.pose_graph_per_person[state.debug_person_id], ordered_bone_types, remap_position);
+			viz_pose_graph(room, result.cluster_list_per_type,
+				result.pose_graph_per_person[state.debug_person_id], ordered_bone_types, remap_position);
 		}
 		break;
 	}
@@ -1077,48 +1084,33 @@ static void draw_control_window()
 	}
 
 	ImGui::Separator();
-
-	ImGui::SliderInt("Debug Mode", &state.debug_mode, 0, 6);
-	ImGui::SliderInt("Debug Joint Type", &state.debug_joint_type, 0, info.joint_types.size() - 1);
-	ImGui::SliderInt("Debug Person Id", &state.debug_person_id, 0, info.max_person_num - 1);
+	
+	ImGui::Text("Debug:");
 	ImGui::Checkbox("Show Ground Truth", &state.show_ground_truth);
 	ImGui::SameLine();
 	ImGui::Checkbox("Show Result", &state.show_result);
 	ImGui::SameLine();
 	ImGui::Checkbox("Show Camera Rays", &state.show_camera_rays);
+	ImGui::SliderInt("Debug Mode", &state.debug_mode, 0, 6);
+	ImGui::SliderInt("Debug Joint Type", &state.debug_joint_type, 0, info.joint_types.size() - 1);
+	ImGui::SliderInt("Debug Person Id", &state.debug_person_id, 0, info.max_person_num - 1);
 
 	ImGui::Separator();
 
-	auto average_value = [](double score, double completeness) -> float
-	{
-		return completeness <= 0.0 ? 0.0f : float(score / completeness);
-	};
+	const FrameResult& result = state.frame_results[state.frame_index];
 
-	const FrameScore& score = state.frame_scores[state.frame_index];
-	float pcp = 0, pcp_completeness = 0;
-	float pck = 0, pck_completeness = 0;
-	float mpjpe = 0, mpjpe_completeness = 0;
-	for (int index = 0; index < score.pcp_score.size(); ++index)
-	{
-		pcp += score.pcp_score[index];
-		pcp_completeness += score.pcp_completeness[index];
-		pck += score.pck_score[index];
-		pck_completeness += score.pck_completeness[index];
-		mpjpe += score.mpjpe_score[index];
-		mpjpe_completeness += score.mpjpe_completeness[index];
-	}
 	ImGui::Text("Current Frame:");
-	ImGui::Text("\tPCP:\t%.4f", average_value(pcp, pcp_completeness));
-	ImGui::Text("\tPCK:\t%.4f", average_value(pck, pck_completeness));
-	ImGui::Text("\tMPJPE:\t%.3f mm", average_value(mpjpe, mpjpe_completeness));
-	ImGui::Text("\tTime:\t%.3f ms", score.execution_time);
+	ImGui::Text("\tPCP:\t%.4f", compute_avg(result.pcp_score, result.pcp_completeness));
+	ImGui::Text("\tPCK:\t%.4f", compute_avg(result.pck_score, result.pck_completeness));
+	ImGui::Text("\tMPJPE:\t%.3f mm", compute_avg(result.mpjpe_score, result.mpjpe_completeness));
+	ImGui::Text("\tTime:\t%.3f ms", result.execution_time);
 
 	ImGui::Separator();
 
 	ImGui::Text("All Computed Frames:");
-	ImGui::Text("\tPCP:\t%.4f", average_value(state.total_pcp_score, state.total_pcp_completeness));
-	ImGui::Text("\tPCK:\t%.4f", average_value(state.total_pck_score, state.total_pck_completeness));
-	ImGui::Text("\tMPJPE:\t%.3f mm", average_value(state.total_mpjpe_score, state.total_mpjpe_completeness));
+	ImGui::Text("\tPCP:\t%.4f", compute_avg(state.total_pcp_score, state.total_pcp_completeness));
+	ImGui::Text("\tPCK:\t%.4f", compute_avg(state.total_pck_score, state.total_pck_completeness));
+	ImGui::Text("\tMPJPE:\t%.3f mm", compute_avg(state.total_mpjpe_score, state.total_mpjpe_completeness));
 	ImGui::Text("\tTime:\t%.3f ms", state.total_execution_time / state.computed_count);
 
 	ImGui::End();

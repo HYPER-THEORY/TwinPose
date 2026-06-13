@@ -68,6 +68,7 @@ public:
 	ink::Vec2 screen_size = {1032, 776};
 	int joint_type_num = 25;
 	int view_num = 5;
+	int max_person_num = 3;
 	float conf_exponent = 1.0f;
 	std::vector<std::pair<int, int>> bone_types = _4da_default_bone_types;
 
@@ -291,7 +292,6 @@ public:
 			return false;
 		}
 
-		int joint_type_num = 21;
 		int frame_num = 0;
 		stream >> frame_num;
 
@@ -332,7 +332,10 @@ public:
 					}
 				}
 
-				multi_poses[frame_index].add_pose(person_index, std::move(new_pose));
+				if (person_index < max_person_num)
+				{
+					multi_poses[frame_index].add_pose(person_index, std::move(new_pose));
+				}
 			}
 		}
 
@@ -394,7 +397,10 @@ public:
 					}
 				}
 
-				multi_poses[frame_index].add_pose(person_id, std::move(new_pose));
+				if (person_id < max_person_num)
+				{
+					multi_poses[frame_index].add_pose(person_id, std::move(new_pose));
+				}
 			}
 		}
 

@@ -35,6 +35,7 @@ class CampusLoader
 public:
 	int joint_type_num = 14;
 	int view_num = 3;
+	int max_person_num = 3;
 
 	bool load_cameras(const std::string& path, std::vector<MultiView>& multi_views) const
 	{
@@ -126,7 +127,10 @@ public:
 					new_pose.add_joint(joint_type, std::move(position));
 				}
 
-				current_multi_pose->add_pose(pose_id - 1, std::move(new_pose));
+				if (pose_id - 1 < max_person_num)
+				{
+					current_multi_pose->add_pose(pose_id - 1, std::move(new_pose));
+				}
 			}
 			else
 			{

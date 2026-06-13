@@ -365,17 +365,21 @@ static bool load_dataset()
 		if (info.ground_truth_loader == GROUND_TRUTH_LOADER_4DA)
 		{
 			_4DALoader loader;
+			loader.joint_type_num = info.ground_truth_joint_type_num;
+			loader.max_person_num = info.ground_truth_max_person_num;
 			loaded = loader.load_multi_poses(info.ground_truth_load_path, state.ground_truth_multi_poses);
 		}
 		else if (info.ground_truth_loader == GROUND_TRUTH_LOADER_4DA_SHELF)
 		{
 			_4DALoader loader;
+			loader.max_person_num = info.ground_truth_max_person_num;
 			loaded = loader.load_multi_poses_2(info.ground_truth_load_path, state.ground_truth_multi_poses);
 		}
 		else if (info.ground_truth_loader == GROUND_TRUTH_LOADER_CAMPUS)
 		{
 			CampusLoader loader;
 			loader.joint_type_num = info.ground_truth_joint_type_num;
+			loader.max_person_num = info.ground_truth_max_person_num;
 			loaded = loader.load_multi_poses(info.ground_truth_load_path, state.ground_truth_multi_poses);
 		}
 		else if (info.ground_truth_loader == GROUND_TRUTH_LOADER_PANOPTIC)

@@ -204,6 +204,9 @@ struct
 	bool show_result = true;
 	bool show_camera_rays = false;
 
+	bool highlight_pcp_errors = false;
+	bool highlight_pck_errors = false;
+
 	float pcp_alpha = 0.5f;
 	float pck_distance = 0.2f;
 
@@ -761,8 +764,44 @@ static void visualize_frame(Room& room)
 	{
 		viz_multi_pose_3d(room, result.multi_pose, remap_position, ink::Vec3(1.5));
 	}
+	if (state.highlight_pcp_errors)
+	{
+		for (auto& [person_id, results] : result.pcp_results)
+		{
+			auto& pose = ground_truth.get_pose(person_id);
 
-	const FrameResult& frame_result = state.frame_result[state.frame_index];
+			for (int bone_index = 0; bone_index < EVAL_BONE_TYPES.size(); ++bone_index)
+			{
+				auto& [joint_type_1, joint_type_2] = EVAL_BONE_TYPES[bone_index];
+				if (results[bone_index] || !pose.has_joint(joint_type_1) || !pose.has_joint(joint_type_2))
+				{
+					continue;
+				}
+				ink::Vec3 pos_1 = remap_position(pose.get_joint(joint_type_1));
+				ink::Vec3 pos_2 = remap_position(pose.get_joint(joint_type_2));
+				room.set_bone(pos_1, pos_2, 0.011f, {10, 1, 1});
+			}
+		}
+	}
+	if (state.highlight_pck_errors)
+	{
+		for (auto& [person_id, results] : result.pck_results)
+		{
+			auto& pose = ground_truth.get_pose(person_id);
+
+			for (int joint_index = 0; joint_index < EVAL_JOINT_TYPES.size(); ++joint_index)
+			{
+				auto& joint_type = EVAL_JOINT_TYPES[joint_index];
+				if (results[joint_index] || !pose.has_joint(joint_type))
+				{
+					continue;
+				}
+				ink::Vec3 pos = remap_position(pose.get_joint(joint_type));
+				room.set_joint(pos, 0.021f, {10, 1, 1});
+			}
+		}
+	}
+
 	std::vector<std::pair<int, int>> ordered_bone_types = compute_ordered_bone_types(info.joint_types);
 
 	float joint_radius = info.params.max_joint_radius * 0.25f;
@@ -1098,6 +1137,12 @@ static void draw_control_window()
 	ImGui::SliderInt("Debug Mode", &state.debug_mode, 0, 6);
 	ImGui::SliderInt("Debug Joint Type", &state.debug_joint_type, 0, info.joint_types.size() - 1);
 	ImGui::SliderInt("Debug Person Id", &state.debug_person_id, 0, info.max_person_num - 1);
+
+	ImGui::Separator();
+	ImGui::Text("Highlight:");
+	ImGui::Checkbox("PCP Errors", &state.highlight_pcp_errors);
+	ImGui::SameLine();
+	ImGui::Checkbox("PCK Errors", &state.highlight_pck_errors);
 
 	ImGui::Separator();
 

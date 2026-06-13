@@ -10,11 +10,11 @@
 	"detection_max_person_num" : 4,
 	"detection_frame_range" : [300, 600],
 
-	"ground_truth_loader" : "Campus",
+	"ground_truth_loader" : "4DA Shelf",
 	"ground_truth_skel_type" : "Shelf14",
-	"ground_truth_load_path" : "shelf_300_600.gt.txt",
-	"ground_truth_joint_type_num" : 14,
-	"ground_truth_max_person_num" : 4,
+	"ground_truth_load_path" : "corrected_gt.txt",
+	"ground_truth_joint_type_num" : 15,
+	"ground_truth_max_person_num" : 3,
 
 	"result_correction": "Shelf"
 }

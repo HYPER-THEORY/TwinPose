@@ -1045,9 +1045,9 @@ static void draw_loading_window()
 		ImGui::Combo("Detection Loader", &info.detection_loader, loader_names, IM_ARRAYSIZE(loader_names));
 		ImGui::Combo("Detection Skel Type", &info.detection_skel_type, skeleton_type_names, IM_ARRAYSIZE(skeleton_type_names));
 		ImGui::InputText("Detection Load Path", info.detection_load_path, sizeof(info.detection_load_path));
-		ImGui::InputInt("Joint Type Num", &info.detection_joint_type_num);
-		ImGui::InputInt("Loader View Num", &info.detection_view_num);
-		ImGui::InputInt("Loader Max Person Num", &info.detection_max_person_num);
+		ImGui::InputInt("Detection Joint Type Num", &info.detection_joint_type_num);
+		ImGui::InputInt("Detection View Num", &info.detection_view_num);
+		ImGui::InputInt("Detection Max Person Num", &info.detection_max_person_num);
 		ImGui::InputInt("Frame Begin", &info.detection_frame_begin);
 		ImGui::InputInt("Frame End", &info.detection_frame_end);
 		ImGui::InputFloat("Detection Joint 2D Scale", &info.detection_joint_2d_scale, 0.0f, 0.0f, "%.7f");

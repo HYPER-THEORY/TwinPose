@@ -87,7 +87,7 @@ inline void viz_multi_pose_3d(Room& room, const MultiPose3D& multi_pose, const R
 
 inline ink::Vec3 get_palette_color(int index)
 {
-	return ink::Color::hsl_to_rgb({std::fmodf(index * ink::PI, 1.0f), 0.75f, 0.5f});
+	return ink::Color::hsl_to_rgb({std::fmodf(index * ink::PI, 1.0f), 0.7f, 0.7f});
 }
 
 inline void viz_joints(Room& room,
@@ -229,7 +229,7 @@ inline void viz_rays(Room& room, const MultiView& multi_view, int view_num,
 	for (int view_id = 0; view_id < view_num; ++view_id)
 	{
 		const View& view = multi_view.get_view(view_id);
-		ink::Vec3 color = get_palette_color(view_id);
+		ink::Vec3 color = get_palette_color(view_id) * 1.77f;
 
 		int joint_num = view.get_joint_num(joint_type);
 		for (int person_id = 1; person_id <= joint_num; ++person_id)

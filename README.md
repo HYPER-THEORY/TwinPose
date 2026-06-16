@@ -4,7 +4,7 @@
 
 **[SIGGRAPH 2026]** Official implementation of *"TwinPose: Person-Specific Subspaces for Multi-View 3D Pose Estimation"*
 
-TwinPose is a real-time multi-person multi-view 3D human pose estimation algorithm and system. TwinPose achieves state-of-the-art performance on public datasets while delivering superior computational efficiency, making it capable of handling complex scenarios with a large number of views and dense crowds.
+TwinPose is a real-time multi-person multi-view 3D human pose estimation algorithm and system. TwinPose achieves state-of-the-art performance on public datasets while delivering superior computational efficiency, making it capable of handling complex scenarios with a large number of views and dense crowds. For more information, please visit our paper page https://github.com/zgspose/TwinPose.
 
 This project is powered by [Ink3D](https://github.com/HYPER-THEORY/Ink3D).
 
@@ -150,10 +150,14 @@ TwinPose provides 3 different built-in evaluation metrics:
 If you find this project useful in your research, please cite:
 
 ```bibtex
-@inproceedings{twinpose2026,
-  author    = {Yang, Wenwu and He, Tianyi and Ding, Jiwei and Wang, Xun and Zhang, Rong and Zhou, Kun},
-  title     = {TwinPose: Person-Specific Subspaces for Multi-View 3D Pose Estimation},
-  booktitle = {ACM SIGGRAPH 2026 Conference Proceedings},
-  year      = {2026}
+@article{yang2026twinpose,
+  title         = {TwinPose: Person-Specific Subspaces for Multi-View 3D Pose Estimation},
+  author        = {Yang, Wenwu and He, Tianyi and Ding, Jiwei and Wang, Xun and Zhang, Rong and Zhou, Kun},
+  journal       = {ACM Transactions on Graphics},
+  volume        = {45},
+  number        = {4},
+  articleno     = {61},
+  year          = {2026},
+  note          = {SIGGRAPH 2026 Journal Track}
 }
 ```

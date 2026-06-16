@@ -14,11 +14,4 @@ cmake -G "Visual Studio 18 2026" -A x64 ^
     -B "%ROOT_DIR%\build" ^
     -DCMAKE_CONFIGURATION_TYPES="Release;Debug"
 
-if %ERRORLEVEL% neq 0 (
-    echo.
-    echo [ERROR] CMake configuration failed!
-    pause
-    exit /b 1
-)
-
 pause

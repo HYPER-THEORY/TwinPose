@@ -65,7 +65,7 @@ inline const std::vector<std::pair<int, int>> _4da_default_bone_types = {
 class _4DALoader
 {
 public:
-	ink::Vec2 screen_size = {1032, 776};
+	ink::Vec2 image_size = {1032, 776};
 	int joint_type_num = 25;
 	int view_num = 5;
 	int max_person_num = 3;
@@ -119,11 +119,11 @@ public:
 							stream >> value;
 							if (swizzle == 0)
 							{
-								candidates[joint_index].point.x = value * (screen_size.x - 1.f);
+								candidates[joint_index].point.x = value * (image_size.x - 1.f);
 							}
 							else if (swizzle == 1)
 							{
-								candidates[joint_index].point.y = value * (screen_size.y - 1.f);
+								candidates[joint_index].point.y = value * (image_size.y - 1.f);
 							}
 							else
 							{

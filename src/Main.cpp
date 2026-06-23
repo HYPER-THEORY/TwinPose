@@ -166,6 +166,8 @@ struct
 	int detection_max_person_num = 0;
 	int detection_frame_begin = 0;
 	int detection_frame_end = 0;
+	int detection_image_width = 0;
+	int detection_image_height = 0;
 	float detection_joint_2d_scale = 1.0f;
 
 	int ground_truth_loader = GROUND_TRUTH_LOADER_NONE;
@@ -174,6 +176,8 @@ struct
 
 	int ground_truth_joint_type_num = 0;
 	int ground_truth_max_person_num = 0;
+	int ground_truth_frame_begin = 0;
+	int ground_truth_frame_end = 0;
 
 	char sync_points_path[512];
 
@@ -291,6 +295,8 @@ static bool load_dataset()
 		_4DALoader loader;
 		loader.joint_type_num = info.detection_joint_type_num;
 		loader.view_num = info.detection_view_num;
+		loader.image_size.x = info.detection_image_width;
+		loader.image_size.y = info.detection_image_height;
 		loaded = loader.load_multi_view(info.detection_load_path, state.multi_views);
 	}
 	else if (info.detection_loader == DETECTION_LOADER_OPEN_POSE)
@@ -388,7 +394,7 @@ static bool load_dataset()
 		else if (info.ground_truth_loader == GROUND_TRUTH_LOADER_PANOPTIC)
 		{
 			PanopticLoader loader;
-			loader.frame_range = {info.detection_frame_begin, info.detection_frame_end};
+			loader.frame_range = {info.ground_truth_frame_begin, info.ground_truth_frame_end};
 			loaded = loader.load_multi_poses(info.ground_truth_load_path, state.ground_truth_multi_poses);
 		}
 
@@ -867,6 +873,22 @@ static void apply_int(const nlohmann::json& data, const char* key, int& target)
 	}
 }
 
+static void apply_int2(const nlohmann::json& data, const char* key, int& target_1, int& target_2)
+{
+	if (data.contains(key) && data[key].is_array())
+	{
+		const nlohmann::json& array = data[key];
+		if (array.size() >= 1 && array[0].is_number())
+		{
+			target_1 = array[0].get<int>();
+		}
+		if (array.size() >= 2 && array[1].is_number())
+		{
+			target_2 = array[1].get<int>();
+		}
+	}
+}
+
 static void apply_float(const nlohmann::json& data, const char* key, float& target)
 {
 	if (data.contains(key) && data[key].is_number())
@@ -928,26 +950,16 @@ static bool import_dataset_config(const std::string& path)
 	apply_int(data, "detection_joint_type_num", info.detection_joint_type_num);
 	apply_int(data, "detection_view_num", info.detection_view_num);
 	apply_int(data, "detection_max_person_num", info.detection_max_person_num);
+	apply_int2(data, "detection_frame_range", info.detection_frame_begin, info.detection_frame_end);
+	apply_int2(data, "detection_image_size", info.detection_image_width, info.detection_image_height);
 	apply_float(data, "detection_joint_2d_scale", info.detection_joint_2d_scale);
-
-	if (data.contains("detection_frame_range") && data["detection_frame_range"].is_array())
-	{
-		const nlohmann::json& range = data["detection_frame_range"];
-		if (range.size() >= 1 && range[0].is_number())
-		{
-			info.detection_frame_begin = range[0].get<int>();
-		}
-		if (range.size() >= 2 && range[1].is_number())
-		{
-			info.detection_frame_end = range[1].get<int>();
-		}
-	}
 
 	apply_name(data, "ground_truth_loader", {"None", "4DA", "4DA Shelf", "Campus", "Panoptic"}, info.ground_truth_loader);
 	apply_name(data, "ground_truth_skel_type", {"Body25", "OptiTrack21", "Skel19", "Shelf14", "Coco17", "Coco19"}, info.ground_truth_skel_type);
 	apply_path(data, "ground_truth_load_path", path, info.ground_truth_load_path, sizeof(info.ground_truth_load_path));
 	apply_int(data, "ground_truth_joint_type_num", info.ground_truth_joint_type_num);
 	apply_int(data, "ground_truth_max_person_num", info.ground_truth_max_person_num);
+	apply_int2(data, "ground_truth_frame_range", info.ground_truth_frame_begin, info.ground_truth_frame_end);
 
 	apply_path(data, "sync_points_path", path, info.sync_points_path, sizeof(info.sync_points_path));
 	
@@ -1048,8 +1060,10 @@ static void draw_loading_window()
 		ImGui::InputInt("Detection Joint Type Num", &info.detection_joint_type_num);
 		ImGui::InputInt("Detection View Num", &info.detection_view_num);
 		ImGui::InputInt("Detection Max Person Num", &info.detection_max_person_num);
-		ImGui::InputInt("Frame Begin", &info.detection_frame_begin);
-		ImGui::InputInt("Frame End", &info.detection_frame_end);
+		ImGui::InputInt("Detection Frame Begin", &info.detection_frame_begin);
+		ImGui::InputInt("Detection Frame End", &info.detection_frame_end);
+		ImGui::InputInt("Detection Image Width", &info.detection_image_width);
+		ImGui::InputInt("Detection Image Height", &info.detection_image_height);
 		ImGui::InputFloat("Detection Joint 2D Scale", &info.detection_joint_2d_scale, 0.0f, 0.0f, "%.7f");
 	}
 
@@ -1061,6 +1075,8 @@ static void draw_loading_window()
 		ImGui::InputText("Ground Truth Load Path", info.ground_truth_load_path, sizeof(info.ground_truth_load_path));
 		ImGui::InputInt("Ground Truth Joint Type Num", &info.ground_truth_joint_type_num);
 		ImGui::InputInt("Ground Truth Max Person Num", &info.ground_truth_max_person_num);
+		ImGui::InputInt("Ground Truth Frame Begin", &info.ground_truth_frame_begin);
+		ImGui::InputInt("Ground Truth Frame End", &info.ground_truth_frame_end);
 		ImGui::InputText("Sync Points Path", info.sync_points_path, sizeof(info.sync_points_path));
 	}
 
